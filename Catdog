@@ -1,0 +1,85 @@
+import tensorflow as tf
+
+from tensorflow import keras
+
+from tensorflow.keras import layers
+
+# Load and Preprocess the Data
+
+image_size = (224, 224)
+
+train_data = keras.preprocessing.image.ImageDataGenerator(rescale=1.0/255.0)
+
+train_generator = train_data.flow_from_directory(
+
+    "path_to_train_data_directory",
+
+    target_size=image_size,
+
+    batch_size=32,
+
+    class_mode="binary"
+
+)
+
+test_data = keras.preprocessing.image.ImageDataGenerator(rescale=1.0/255.0)
+
+test_generator = test_data.flow_from_directory(
+
+    "path_to_test_data_directory",
+
+    target_size=image_size,
+
+    batch_size=32,
+
+    class_mode="binary"
+
+)
+
+# Build the Model
+
+model = keras.Sequential([
+
+    layers.Conv2D(16, (3, 3), activation='relu', input_shape=(image_size[0], image_size[1], 3)),
+
+    layers.MaxPooling2D((2, 2)),
+
+    layers.Conv2D(32, (3, 3), activation='relu'),
+
+    layers.MaxPooling2D((2, 2)),
+
+    layers.Conv2D(64, (3, 3), activation='relu'),
+
+    layers.MaxPooling2D((2, 2)),
+
+    layers.Flatten(),
+
+    layers.Dense(64, activation='relu'),
+
+    layers.Dense(1, activation='sigmoid')
+
+])
+
+# Compile and Train the Model
+
+model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+
+model.fit(train_generator, epochs=10, validation_data=test_generator)
+
+# Evaluate the Model
+
+test_loss, test_acc = model.evaluate(test_generator)
+
+print('Test accuracy:', test_acc)
+
+# Prediction
+
+img = keras.preprocessing.image.load_img("path_to_image_file", target_size=image_size)
+
+img_array = keras.preprocessing.image.img_to_array(img)
+
+img_array = tf.expand_dims(img_array, 0)
+
+predictions = model.predict(img_array)
+
+print(predictions)
