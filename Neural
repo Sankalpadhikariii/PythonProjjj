@@ -1,0 +1,85 @@
+import pandas as pd
+
+import numpy as np
+
+import tensorflow as tf
+
+from sklearn.model_selection import train_test_split
+
+from sklearn.preprocessing import LabelEncoder
+
+from tensorflow.keras.preprocessing.text import Tokenizer
+
+from tensorflow.keras.preprocessing.sequence import pad_sequences
+
+# Load the SMS spam collection dataset (or your own dataset)
+
+data = pd.read_csv('sms_spam_dataset.csv')
+
+# Preprocess the data
+
+X = data['text'].values
+
+y = data['label'].values
+
+# Encode the target labels
+
+encoder = LabelEncoder()
+
+y = encoder.fit_transform(y)
+
+# Split the dataset into training and testing sets
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Tokenize the text data
+
+tokenizer = Tokenizer()
+
+tokenizer.fit_on_texts(X_train)
+
+# Convert text to sequences
+
+X_train = tokenizer.texts_to_sequences(X_train)
+
+X_test = tokenizer.texts_to_sequences(X_test)
+
+# Pad sequences to ensure equal length
+
+max_length = 100  # Set the maximum length of a sequence
+
+X_train = pad_sequences(X_train, maxlen=max_length)
+
+X_test = pad_sequences(X_test, maxlen=max_length)
+
+# Build the neural network model
+
+model = tf.keras.models.Sequential([
+
+    tf.keras.layers.Embedding(len(tokenizer.word_index) + 1, 64, input_length=max_length),
+
+    tf.keras.layers.Conv1D(128, 5, activation='relu'),
+
+    tf.keras.layers.GlobalMaxPooling1D(),
+
+    tf.keras.layers.Dense(64, activation='relu'),
+
+    tf.keras.layers.Dense(1, activation='sigmoid')
+
+])
+
+# Compile the model
+
+model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+
+# Train the model
+
+model.fit(X_train, y_train, epochs=10, batch_size=32, validation_data=(X_test, y_test))
+
+# Evaluate the model
+
+loss, accuracy = model.evaluate(X_test, y_test)
+
+print("Test Loss:", loss)
+
+print("Test Accuracy:", accuracy)
